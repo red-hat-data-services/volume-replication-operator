@@ -23,6 +23,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"google.golang.org/grpc/codes"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,8 +41,7 @@ import (
 )
 
 const (
-	pvcDataSource              = "PersistentVolumeClaim"
-	volumeReplicationFinalizer = "replication.storage.openshift.io"
+	pvcDataSource = "PersistentVolumeClaim"
 )
 
 var (
@@ -69,7 +69,6 @@ type VolumeReplicationReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *VolumeReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-
 	logger := r.Log.WithValues("Request.Name", req.Name, "Request.Namespace", req.Namespace)
 
 	// Fetch VolumeReplication instance
@@ -88,7 +87,7 @@ func (r *VolumeReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// Get VolumeReplicationClass
-	vrcObj, err := r.getVolumeReplicaCLass(logger, instance.Spec.VolumeReplicationClass)
+	vrcObj, err := r.getVolumeReplicaClass(logger, instance.Spec.VolumeReplicationClass)
 	if err != nil {
 		setFailureCondition(instance)
 		_ = r.updateReplicationStatus(instance, logger, getCurrentReplicationState(instance), err.Error())
@@ -122,17 +121,24 @@ func (r *VolumeReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 	}
 
-	var volumeHandle string
+	var (
+		volumeHandle string
+		pvc          *corev1.PersistentVolumeClaim
+		pv           *corev1.PersistentVolume
+		pvErr        error
+	)
+
 	nameSpacedName := types.NamespacedName{Name: instance.Spec.DataSource.Name, Namespace: req.Namespace}
 	switch instance.Spec.DataSource.Kind {
 	case pvcDataSource:
-		_, pv, err := r.getPVCDataSource(logger, nameSpacedName)
-		if err != nil {
+		pvc, pv, pvErr = r.getPVCDataSource(logger, nameSpacedName)
+		if pvErr != nil {
 			setFailureCondition(instance)
-			_ = r.updateReplicationStatus(instance, logger, getCurrentReplicationState(instance), err.Error())
-			logger.Error(err, "failed to get PVC", "PVCName", instance.Spec.DataSource.Name)
-			return ctrl.Result{}, err
+			_ = r.updateReplicationStatus(instance, logger, getCurrentReplicationState(instance), pvErr.Error())
+			logger.Error(pvErr, "failed to get PVC", "PVCName", instance.Spec.DataSource.Name)
+			return ctrl.Result{}, pvErr
 		}
+
 		volumeHandle = pv.Spec.CSI.VolumeHandle
 	default:
 		err = fmt.Errorf("unsupported datasource kind")
@@ -146,13 +152,13 @@ func (r *VolumeReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// check if the object is being deleted
 	if instance.GetDeletionTimestamp().IsZero() {
-		if !contains(instance.GetFinalizers(), volumeReplicationFinalizer) {
-			logger.Info("finalizer not found for volumeReplication object. Adding finalizer", "Finalizer", volumeReplicationFinalizer)
-			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, volumeReplicationFinalizer)
-			if err := r.Client.Update(context.TODO(), instance); err != nil {
-				logger.Error(err, "failed to update volumeReplication object with finalizer", "Finalizer", volumeReplicationFinalizer)
-				return reconcile.Result{}, err
-			}
+		if err := r.addFinalizerToVR(logger, instance); err != nil {
+			logger.Error(err, "Failed to add VolumeReplication finalizer")
+			return reconcile.Result{}, err
+		}
+		if err := r.addFinalizerToPVC(logger, pvc); err != nil {
+			logger.Error(err, "Failed to add PersistentVolumeClaim finalizer")
+			return reconcile.Result{}, err
 		}
 	} else {
 		if contains(instance.GetFinalizers(), volumeReplicationFinalizer) {
@@ -161,12 +167,15 @@ func (r *VolumeReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 				logger.Error(err, "failed to disable replication")
 				return ctrl.Result{}, err
 			}
+			if err := r.removeFinalizerFromPVC(logger, pvc); err != nil {
+				logger.Error(err, "Failed to remove PersistentVolumeClaim finalizer")
+				return reconcile.Result{}, err
+			}
 
-			logger.Info("removing finalizer from volumeReplication object", "Finalizer", volumeReplicationFinalizer)
-			// once all finalizers have been removed, the object will be deleted
-			instance.ObjectMeta.Finalizers = remove(instance.ObjectMeta.Finalizers, volumeReplicationFinalizer)
-			if err := r.Client.Update(context.TODO(), instance); err != nil {
-				logger.Error(err, "failed to remove finalizer from volumeReplication object", "Finalizer", volumeReplicationFinalizer)
+			// once all finalizers have been removed, the object will be
+			// deleted
+			if err := r.removeFinalizerFromVR(logger, instance); err != nil {
+				logger.Error(err, "Failed to remove VolumeReplication finalizer")
 				return reconcile.Result{}, err
 			}
 		}
