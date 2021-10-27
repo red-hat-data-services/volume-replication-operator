@@ -251,6 +251,13 @@ func (r *VolumeReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if replicationErr != nil {
 		logger.Error(replicationErr, "failed to Replicate", "ReplicationState", instance.Spec.ReplicationState)
 		_ = r.updateReplicationStatus(instance, logger, getCurrentReplicationState(instance), replicationErr.Error())
+		if instance.Status.State == replicationv1alpha1.SecondaryState {
+			return ctrl.Result{
+				Requeue: true,
+				// in case of any error during secondary state, requeue for every 15 seconds.
+				RequeueAfter: time.Duration(time.Second * 15),
+			}, nil
+		}
 		return ctrl.Result{}, replicationErr
 	}
 
@@ -258,7 +265,13 @@ func (r *VolumeReplicationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		logger.Info("volume is not ready to use, requeuing for resync")
 
 		_ = r.updateReplicationStatus(instance, logger, getCurrentReplicationState(instance), "volume is degraded")
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{
+			Requeue: true,
+			// Setting Requeue time for 30 seconds as the resync can take time
+			// and having default Requeue exponential backoff time can affect
+			// the RTO time.
+			RequeueAfter: time.Duration(time.Second * 30),
+		}, nil
 	}
 
 	var msg string
