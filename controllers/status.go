@@ -42,21 +42,21 @@ const (
 	NotResyncing    = "NotResyncing"
 )
 
-// sets conditions when volume was promoted successfully
+// sets conditions when volume was promoted successfully.
 func setPromotedCondition(conditions *[]metav1.Condition, observedGeneration int64) {
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionCompleted,
 		Reason:             Promoted,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionDegraded,
 		Reason:             Healthy,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionResyncing,
 		Reason:             NotResyncing,
 		ObservedGeneration: observedGeneration,
@@ -64,21 +64,21 @@ func setPromotedCondition(conditions *[]metav1.Condition, observedGeneration int
 	})
 }
 
-// sets conditions when volume promotion was failed
+// sets conditions when volume promotion was failed.
 func setFailedPromotionCondition(conditions *[]metav1.Condition, observedGeneration int64) {
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionCompleted,
 		Reason:             FailedToPromote,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionDegraded,
 		Reason:             Error,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionResyncing,
 		Reason:             NotResyncing,
 		ObservedGeneration: observedGeneration,
@@ -86,15 +86,15 @@ func setFailedPromotionCondition(conditions *[]metav1.Condition, observedGenerat
 	})
 }
 
-// sets conditions when volume is demoted and ready to use (resync completed)
+// sets conditions when volume is demoted and ready to use (resync completed).
 func setNotDegradedCondition(conditions *[]metav1.Condition, observedGeneration int64) {
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionDegraded,
 		Reason:             Healthy,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionResyncing,
 		Reason:             NotResyncing,
 		ObservedGeneration: observedGeneration,
@@ -102,67 +102,65 @@ func setNotDegradedCondition(conditions *[]metav1.Condition, observedGeneration 
 	})
 }
 
-// sets conditions when volume was demoted successfully
+// sets conditions when volume was demoted successfully.
 func setDemotedCondition(conditions *[]metav1.Condition, observedGeneration int64) {
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionCompleted,
 		Reason:             Demoted,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionDegraded,
 		Reason:             VolumeDegraded,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionResyncing,
 		Reason:             NotResyncing,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-
 }
 
-// sets conditions when volume demotion was failed
+// sets conditions when volume demotion was failed.
 func setFailedDemotionCondition(conditions *[]metav1.Condition, observedGeneration int64) {
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionCompleted,
 		Reason:             FailedToDemote,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionDegraded,
 		Reason:             Error,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionResyncing,
 		Reason:             NotResyncing,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-
 }
 
-// sets conditions when volume resync was triggered successfully
+// sets conditions when volume resync was triggered successfully.
 func setResyncCondition(conditions *[]metav1.Condition, observedGeneration int64) {
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionCompleted,
 		Reason:             Demoted,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionDegraded,
 		Reason:             VolumeDegraded,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionResyncing,
 		Reason:             ResyncTriggered,
 		ObservedGeneration: observedGeneration,
@@ -170,30 +168,29 @@ func setResyncCondition(conditions *[]metav1.Condition, observedGeneration int64
 	})
 }
 
-// sets conditions when volume resync failed
+// sets conditions when volume resync failed.
 func setFailedResyncCondition(conditions *[]metav1.Condition, observedGeneration int64) {
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionCompleted,
 		Reason:             FailedToResync,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionDegraded,
 		Reason:             Error,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionTrue,
 	})
-	setStatusCondition(conditions, metav1.Condition{
+	setStatusCondition(conditions, &metav1.Condition{
 		Type:               ConditionResyncing,
 		Reason:             FailedToResync,
 		ObservedGeneration: observedGeneration,
 		Status:             metav1.ConditionFalse,
 	})
-
 }
 
-func setStatusCondition(existingConditions *[]metav1.Condition, newCondition metav1.Condition) {
+func setStatusCondition(existingConditions *[]metav1.Condition, newCondition *metav1.Condition) {
 	if existingConditions == nil {
 		existingConditions = &[]metav1.Condition{}
 	}
@@ -201,7 +198,8 @@ func setStatusCondition(existingConditions *[]metav1.Condition, newCondition met
 	existingCondition := findCondition(*existingConditions, newCondition.Type)
 	if existingCondition == nil {
 		newCondition.LastTransitionTime = metav1.NewTime(time.Now())
-		*existingConditions = append(*existingConditions, newCondition)
+		*existingConditions = append(*existingConditions, *newCondition)
+
 		return
 	}
 

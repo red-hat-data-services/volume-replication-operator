@@ -19,24 +19,21 @@ package client
 import (
 	"errors"
 	"testing"
-	"time"
+
+	"github.com/csi-addons/volume-replication-operator/pkg/client/fake"
 
 	replicationlib "github.com/csi-addons/spec/lib/go/replication"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
-
-	"github.com/csi-addons/volume-replication-operator/pkg/client/fake"
 )
 
 func TestEnableVolumeReplication(t *testing.T) {
-	var client = NewReplicationClient(&grpc.ClientConn{}, time.Minute)
-	// return success response
+	t.Parallel()
 	mockedEnableReplication := &fake.ReplicationClient{
 		EnableVolumeReplicationMock: func(volumeID, replicationID string, secrets, parameters map[string]string) (*replicationlib.EnableVolumeReplicationResponse, error) {
 			return &replicationlib.EnableVolumeReplicationResponse{}, nil
 		},
 	}
-	client = mockedEnableReplication
+	client := mockedEnableReplication
 	resp, err := client.EnableVolumeReplication("", "", nil, nil)
 	assert.Equal(t, &replicationlib.EnableVolumeReplicationResponse{}, resp)
 	assert.Nil(t, err)
@@ -54,14 +51,13 @@ func TestEnableVolumeReplication(t *testing.T) {
 }
 
 func TestDisableVolumeReplication(t *testing.T) {
-	var client = NewReplicationClient(&grpc.ClientConn{}, time.Minute)
-	// return success response
+	t.Parallel()
 	mockedDisableReplication := &fake.ReplicationClient{
 		DisableVolumeReplicationMock: func(volumeID, replicationID string, secrets, parameters map[string]string) (*replicationlib.DisableVolumeReplicationResponse, error) {
 			return &replicationlib.DisableVolumeReplicationResponse{}, nil
 		},
 	}
-	client = mockedDisableReplication
+	client := mockedDisableReplication
 	resp, err := client.DisableVolumeReplication("", "", nil, nil)
 	assert.Equal(t, &replicationlib.DisableVolumeReplicationResponse{}, resp)
 	assert.Nil(t, err)
@@ -79,7 +75,7 @@ func TestDisableVolumeReplication(t *testing.T) {
 }
 
 func TestPromoteVolume(t *testing.T) {
-	var client = NewReplicationClient(&grpc.ClientConn{}, time.Minute)
+	t.Parallel()
 	// return success response
 	mockedPromoteVolume := &fake.ReplicationClient{
 		PromoteVolumeMock: func(volumeID, replicationID string, force bool, secrets, parameters map[string]string) (*replicationlib.PromoteVolumeResponse, error) {
@@ -87,7 +83,7 @@ func TestPromoteVolume(t *testing.T) {
 		},
 	}
 	force := false
-	client = mockedPromoteVolume
+	client := mockedPromoteVolume
 	resp, err := client.PromoteVolume("", "", force, nil, nil)
 	assert.Equal(t, &replicationlib.PromoteVolumeResponse{}, resp)
 	assert.Nil(t, err)
@@ -105,14 +101,14 @@ func TestPromoteVolume(t *testing.T) {
 }
 
 func TestDemoteVolume(t *testing.T) {
-	var client = NewReplicationClient(&grpc.ClientConn{}, time.Minute)
+	t.Parallel()
 	// return success response
 	mockedDemoteVolume := &fake.ReplicationClient{
 		DemoteVolumeMock: func(volumeID, replicationID string, secrets, parameters map[string]string) (*replicationlib.DemoteVolumeResponse, error) {
 			return &replicationlib.DemoteVolumeResponse{}, nil
 		},
 	}
-	client = mockedDemoteVolume
+	client := mockedDemoteVolume
 	resp, err := client.DemoteVolume("", "", nil, nil)
 	assert.Equal(t, &replicationlib.DemoteVolumeResponse{}, resp)
 	assert.Nil(t, err)
@@ -130,14 +126,14 @@ func TestDemoteVolume(t *testing.T) {
 }
 
 func TestResyncVolume(t *testing.T) {
-	var client = NewReplicationClient(&grpc.ClientConn{}, time.Minute)
+	t.Parallel()
 	// return success response
 	mockedResyncVolume := &fake.ReplicationClient{
 		ResyncVolumeMock: func(volumeID, replicationID string, secrets, parameters map[string]string) (*replicationlib.ResyncVolumeResponse, error) {
 			return &replicationlib.ResyncVolumeResponse{}, nil
 		},
 	}
-	client = mockedResyncVolume
+	client := mockedResyncVolume
 	resp, err := client.ResyncVolume("", "", nil, nil)
 	assert.Equal(t, &replicationlib.ResyncVolumeResponse{}, resp)
 	assert.Nil(t, err)
