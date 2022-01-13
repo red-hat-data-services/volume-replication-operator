@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// getPVCDataSource get pvc, pv object from the request.
 func (r VolumeReplicationReconciler) getPVCDataSource(logger logr.Logger, req types.NamespacedName) (*corev1.PersistentVolumeClaim, *corev1.PersistentVolume, error) {
 	pvc := &corev1.PersistentVolumeClaim{}
 	err := r.Client.Get(context.TODO(), req, pvc)
@@ -33,6 +34,7 @@ func (r VolumeReplicationReconciler) getPVCDataSource(logger logr.Logger, req ty
 		if errors.IsNotFound(err) {
 			logger.Error(err, "PVC not found", "PVC Name", req.Name)
 		}
+
 		return nil, nil, err
 	}
 	// Validate PVC in bound state
@@ -48,6 +50,7 @@ func (r VolumeReplicationReconciler) getPVCDataSource(logger logr.Logger, req ty
 		if errors.IsNotFound(err) {
 			logger.Error(err, "PV not found", "PV Name", pvName)
 		}
+
 		return pvc, nil, err
 	}
 
